@@ -1,2 +1,2 @@
 # bidirectional list
-blist.c
+bList.h
