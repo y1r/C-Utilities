@@ -1,45 +1,8 @@
-#ifndef _BLIST_H_INCLUDED_
-#define _BLIST_H_INCLUDED_
+#include "bList.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#define TYPE int
-#define LENGTH_TYPE unsigned long long
-
-//#define bList->method(param) bList->method(bList, param)
-
-typedef struct bListNode{
-	struct bListNode *prev;
-	TYPE data;
-	struct bListNode *next;
-}bListNode;
-
-typedef struct bList{
-	struct bListNode *begin;
-	struct bListNode *end;
-	LENGTH_TYPE length;
-	TYPE* (*back)( struct bList *self );
-	void (*clear)( struct bList *self );
-	void (*delete)( struct bList *self, TYPE *data );
-	int (*empty)( struct bList *self );
-	int (*erase)( struct bList *self, LENGTH_TYPE index );
-	TYPE* (*front)( struct bList *self );
-	TYPE* (*get)( struct bList *self, LENGTH_TYPE index );
-	void (*init)( struct bList *self );
-	void (*insert)( struct bList *self, LENGTH_TYPE index, TYPE *data );
-	void (*pop_back)( struct bList *self );
-	void (*pop_front)( struct bList *self );
-	void (*push_back)( struct bList *self, TYPE *data );
-	void (*push_front)( struct bList *self, TYPE *data );
-//	void (*remove)( struct bList *self, TYPE *data );
-	void (*reverse)( struct bList *self );
-	void (*set)( struct bList *self, LENGTH_TYPE index, TYPE *data );
-	LENGTH_TYPE (*size)( struct bList *self );
-	void (*sort)( struct bList *self );
-	void (*unique)( struct bList *self );
-}bList;
 
 static bListNode *get_ptr( bList *self, LENGTH_TYPE index ){
 	LENGTH_TYPE i = 0;
@@ -212,7 +175,7 @@ static LENGTH_TYPE size( bList *self ){
 	return self->length;
 }
 
-void init( bList *self ){
+void bList_init( bList *self ){
 
 	self->begin = NULL;
 	self->end = NULL;
@@ -224,7 +187,7 @@ void init( bList *self ){
 	self->erase = erase;
 	self->front = front;
 	self->get = get;
-	self->init = init;
+	self->init = bList_init;
 	self->insert = insert;
 	self->pop_back = pop_back;
 	self->pop_front = pop_front;
@@ -239,8 +202,7 @@ void init( bList *self ){
 	return;
 }
 
-#endif
-
+/*
 int main( void ){
 	int num = 10;
 
@@ -261,3 +223,4 @@ int main( void ){
 
 	return 0;
 }
+*/
