@@ -248,6 +248,7 @@ void bList_init( bList *self ){
 	self->get = get;
 	self->init = bList_init;
 	self->insert = insert;
+	self->merge = merge;
 	self->pop_back = pop_back;
 	self->pop_front = pop_front;
 	self->push_back = push_back;
