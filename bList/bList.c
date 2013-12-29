@@ -1,10 +1,11 @@
-#include "bList.h"
+// bidirectional list implementation
 
+#include "bList.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-static bListNode *get_ptr( bList *self, LENGTH_TYPE index ){
+static bListNode *get_ptr( const bList *self, LENGTH_TYPE index ){
 	LENGTH_TYPE i = 0;
 	bListNode *now;
 	if( index < self->size(self) ){
@@ -18,10 +19,8 @@ static bListNode *get_ptr( bList *self, LENGTH_TYPE index ){
 			for( i = self->size(self) - 1; index < i; i-- )
 				now = now->prev;
 		}
-		printf("index:%llu %p\n", index, now);
 		return now;
 	}
-	printf("index:%llu %p\n", index, NULL);
 	return NULL;
 }
 
@@ -33,13 +32,30 @@ static bListNode *make( void ){
 	return new;
 }
 
-static TYPE* back( bList *self ){
+static TYPE* array( const bList *self ){
+	LENGTH_TYPE i = 0;
+	TYPE* array = malloc( sizeof(TYPE) * self->size( self ) );
+
+	if( array == NULL )
+		return NULL;
+
+	for( i = 0; i < self->size( self ); i++ )
+		array[i] = *self->get( self, i );
+
+	return array;
+}
+
+static void array_free( const bList *self, TYPE *array ){
+	free( array );
+	return;
+}
+static TYPE* back( const bList *self ){
 	return &(self->begin->data);
 }
 
 static void clear( bList *self ){
 	if( self->begin != NULL && self->end != NULL )
-		while( !self->erase( self, 0 ) );
+		while( self->erase( self, 0 ) );
 
 	self->begin = NULL;
 	self->end = NULL;
@@ -47,14 +63,14 @@ static void clear( bList *self ){
 	return;
 }
 
-static void delete( bList *self, TYPE* data ){
+static void delete( bList *self, const TYPE* data ){
 	LENGTH_TYPE i = 0;
 	for( i = 0; i < self->size(self); i++ )
 		if( *self->get(self, i) == *data )
 			self->erase( self, i );
 }
 
-static int empty( bList *self ){
+static int empty( const bList *self ){
 	return !(self->size(self));
 }
 
@@ -69,47 +85,65 @@ static int erase( bList *self, LENGTH_TYPE index ){
 			indexPtr->next->prev = indexPtr->prev;
 		else
 			self->end = indexPtr->prev;
-		
+
 		free(indexPtr);
-		self->size--;
+		self->length--;
+		if( !self->size( self ) ){
+			self->begin = NULL;
+			self->end = NULL;
+		}
 		return 1;
 	}
 	return 0;
 }
 
-static TYPE* front( bList *self ){
+static TYPE* front( const bList *self ){
 	return &(self->begin->data);
 }
 
-static TYPE* get( bList *self, LENGTH_TYPE index ){
+static TYPE* get( const bList *self, LENGTH_TYPE index ){
 	bListNode *indexPtr = get_ptr( self, index );
 	if( indexPtr != NULL )
 		return &(indexPtr->data);
 	return NULL;
 }
 
-static void insert( bList *self, LENGTH_TYPE index, TYPE *data ){
+static void insert( bList *self, LENGTH_TYPE index, const TYPE *data ){
 	bListNode *indexPtr = get_ptr( self, index );
 	bListNode *new = make();
+	new->data = *data;
+
+	if( !self->size( self ) ){
+		self->begin = new;
+		self->end = new;
+		self->length++;
+		return;
+	}
+
 	if( indexPtr != NULL ){
 		if( indexPtr->prev != NULL ){
-			if( indexPtr->prev->prev != NULL ){
-				indexPtr->prev->prev->next = new;
-				new->prev = indexPtr->prev->prev;
-			}
-			else{
-				self->begin = new;
-				new->prev = NULL;
-			}
-			new->next = indexPtr->prev;
+			indexPtr->prev->next = new;
+			indexPtr->prev = new;
+			new->prev = indexPtr->prev;
+			new->next = indexPtr;
 		}
-		self->begin = new;
-		new->prev = NULL;
-		new->next = indexPtr;
+		else{
+			self->begin = new;
+			indexPtr->prev = new;
+			new->prev = NULL;
+			new->next = indexPtr;
+		}
+		self->length++;
+		return;
 	}
-	new->data = *data;
-	self->length++;
+	free( new );
+	return;
+}
 
+static void merge( bList *self, const bList *src ){
+	LENGTH_TYPE i = 0;
+	for( i = 0; i < src->size( src ); i++ )
+		self->push_back( self, src->get( src, i ) );
 	return;
 }
 
@@ -123,7 +157,7 @@ static void pop_front( bList *self ){
 	return;
 }
 
-static void push_back( bList *self, TYPE *data ){
+static void push_back( bList *self, const TYPE *data ){
 	bListNode *new = make();
 
 	new->data = *data;
@@ -139,7 +173,7 @@ static void push_back( bList *self, TYPE *data ){
 	return;
 }
 
-static void push_front( bList *self, TYPE *data ){
+static void push_front( bList *self, const TYPE *data ){
 	bListNode *new = make();
 	new->data = *data;
 	self->begin->prev = new;
@@ -164,19 +198,44 @@ static void reverse( bList *self ){
 	return;
 }
 
-static void set( bList *self, LENGTH_TYPE index, TYPE *data ){
-	bListNode *indexPtr = get_ptr( self, index );
-	if( indexPtr != NULL )
-		indexPtr->data = *data;
+static LENGTH_TYPE size( const bList *self ){
+	return self->length;
+}
+
+static int comp( const void *a, const void *b ){
+	if( *(TYPE *)a < *(TYPE *)b )
+		return -1;
+	else if( *(TYPE *)a == *(TYPE *)b )
+		return 0;
+	else
+		return 1;
+}
+
+static void sort( const bList *self ){
+	LENGTH_TYPE i = 0;
+	TYPE *data = self->array( self );
+	qsort( data, self->size( self ), sizeof( TYPE ), comp );
+	for( i = 0; i < self->size( self ); i++ )
+		*self->get( self, i ) = data[i];
+
+	self->array_free( self, data );
+
 	return;
 }
 
-static LENGTH_TYPE size( bList *self ){
-	return self->length;
+static void unique( bList *self ){
+	LENGTH_TYPE i = 0;
+	for( i = 0; i < self->size( self ) - 1; i++ )
+		if( *self->get( self, i ) ==  *self->get( self, i + 1 ) )
+			self->erase( self, i + 1 );
+
+	return;
 }
 
 void bList_init( bList *self ){
 
+	self->array = array;
+	self->array_free = array_free;
 	self->begin = NULL;
 	self->end = NULL;
 	self->length = 0;
@@ -194,33 +253,10 @@ void bList_init( bList *self ){
 	self->push_back = push_back;
 	self->push_front = push_front;
 	self->reverse = reverse;
-	self->set = set;
 	self->size = size;
-//	self->sort = sort;
-//	self->unique = unique;
+	self->sort = sort;
+	self->unique = unique;
 	
 	return;
 }
 
-/*
-int main( void ){
-	int num = 10;
-
-	printf("%d\n", sizeof(bList));
-	puts("HEY");
-	bList array;
-	puts("HEY");
-	init( &array );
-	printf("array: %p init:length:%llu %p\n", &array, array.size( &array ), array.size);
-	array.push_back( &array, &num );
-	printf("%d\n", *array.get(&array, 0));
-	printf("array: %p push_back:length:%llu %p\n", &array, array.size( &array ), array.size);
-	array.erase( &array, 0);
-	printf("array: %p erase:length:%llu %p\n", &array, array.length, array.size);
-	array.clear( &array );
-	printf("array: %p clear:length:%llu %p\n", &array, array.length, array.size);
-	printf("%llu\n", size( &array ));
-
-	return 0;
-}
-*/
