@@ -32,7 +32,7 @@ static bListNode *make( void ){
 	return new;
 }
 
-static TYPE* array( const bList *self ){
+static TYPE* array( bList *self ){
 	LENGTH_TYPE i = 0;
 	TYPE* array = malloc( sizeof(TYPE) * self->size( self ) );
 
@@ -101,11 +101,17 @@ static TYPE* front( const bList *self ){
 	return &(self->begin->data);
 }
 
-static TYPE* get( const bList *self, LENGTH_TYPE index ){
+static TYPE* get( bList *self, LENGTH_TYPE index ){
+	LENGTH_TYPE i = 0;
+	TYPE tmp;
+	memset( &tmp, 0, sizeof(TYPE) );
 	bListNode *indexPtr = get_ptr( self, index );
-	if( indexPtr != NULL )
-		return &(indexPtr->data);
-	return NULL;
+	if( indexPtr == NULL ){
+		while( index != (self->size(self) - 1) )
+			self->push_back( self, &tmp );
+		indexPtr = get_ptr( self, index );
+	}
+	return &(indexPtr->data);
 }
 
 static void insert( bList *self, LENGTH_TYPE index, const TYPE *data ){
@@ -140,7 +146,7 @@ static void insert( bList *self, LENGTH_TYPE index, const TYPE *data ){
 	return;
 }
 
-static void merge( bList *self, const bList *src ){
+static void merge( bList *self, bList *src ){
 	LENGTH_TYPE i = 0;
 	for( i = 0; i < src->size( src ); i++ )
 		self->push_back( self, src->get( src, i ) );
@@ -211,12 +217,12 @@ static int comp( const void *a, const void *b ){
 		return 1;
 }
 
-static void sort( const bList *self ){
+static void sort( bList *self ){
 	LENGTH_TYPE i = 0;
 	TYPE *data = self->array( self );
 	qsort( data, self->size( self ), sizeof( TYPE ), comp );
 	for( i = 0; i < self->size( self ); i++ )
-		*self->get( self, i ) = data[i];
+		*(self->get( self, i )) = data[i];
 
 	self->array_free( self, data );
 
