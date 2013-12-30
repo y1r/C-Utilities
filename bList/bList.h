@@ -27,7 +27,7 @@ typedef struct bList{
 	TYPE* (*get)( struct bList *self, LENGTH_TYPE index );
 	void (*init)( struct bList *self );
 	void (*insert)( struct bList *self, LENGTH_TYPE index, const TYPE *data );
-	void (*merge)( struct bList *self, struct bList *src );
+	void (*merge)( struct bList *self, const struct bList *src );
 	void (*pop_back)( struct bList *self );
 	void (*pop_front)( struct bList *self );
 	void (*push_back)( struct bList *self, const TYPE *data );
@@ -36,6 +36,7 @@ typedef struct bList{
 	void (*reverse)( struct bList *self );
 	LENGTH_TYPE (*size)( const struct bList *self );
 	void (*sort)( struct bList *self );
+	void (*splice)( struct bList *self, LENGTH_TYPE index, const struct bList *src );
 	void (*unique)( struct bList *self );
 }bList;
 

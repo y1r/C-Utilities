@@ -148,10 +148,44 @@ static void insert( bList *self, LENGTH_TYPE index, const TYPE *data ){
 	return;
 }
 
-static void merge( bList *self, bList *src ){
-	LENGTH_TYPE i = 0;
-	for( i = 0; i < src->size( src ); i++ )
-		self->push_back( self, src->get( src, i ) );
+static void merge( bList *self, const bList *src ){
+	LENGTH_TYPE i = 0, all = self->size(self) + src->size(src);
+	TYPE *tmp = malloc( sizeof(TYPE) * all );
+	bListNode *selfPtr = self->begin, *srcPtr = src->begin;
+
+	while( selfPtr != NULL && srcPtr != NULL ){
+		if( srcPtr->data < selfPtr->data ){
+			tmp[i] = srcPtr->data;
+			srcPtr = srcPtr->next;
+		}
+		else{
+			tmp[i] = selfPtr->data;
+			selfPtr = selfPtr->next;
+		}
+		i++;
+	}
+
+	while( selfPtr != NULL ){
+		tmp[i] = selfPtr->data;
+		selfPtr = selfPtr->next;
+		i++;
+	}
+
+	while( srcPtr != NULL ){
+		tmp[i] = srcPtr->data;
+		srcPtr = srcPtr->next;
+		i++;
+	}
+
+	self->resize( self, all );
+	selfPtr = self->begin;
+	for( i = 0; i < all; i++ ){
+		selfPtr->data = tmp[i];
+		selfPtr = selfPtr->next;
+	}
+
+	free(tmp);
+
 	return;
 }
 
@@ -262,6 +296,18 @@ static void sort( bList *self ){
 	return;
 }
 
+static void splice( bList *self, LENGTH_TYPE index, const bList *src ){
+	LENGTH_TYPE i = 0;
+	bListNode *tmp = src->begin;
+
+	for( i = 0; i < src->size( src ); i++ ){
+		self->insert( self, index + i, &(tmp->data) );
+		tmp = tmp->next;
+	}
+
+	return;
+}
+
 static void unique( bList *self ){
 	LENGTH_TYPE i = 0;
 	bListNode *now = self->begin;
@@ -300,6 +346,7 @@ void bList_init( bList *self ){
 	self->reverse = reverse;
 	self->size = size;
 	self->sort = sort;
+	self->splice = splice;
 	self->unique = unique;
 	
 	return;
