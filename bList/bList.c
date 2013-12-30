@@ -35,12 +35,15 @@ static bListNode *make( void ){
 static TYPE* array( bList *self ){
 	LENGTH_TYPE i = 0;
 	TYPE* array = malloc( sizeof(TYPE) * self->size( self ) );
+	bListNode *now = self->begin;
 
 	if( array == NULL )
 		return NULL;
 
-	for( i = 0; i < self->size( self ); i++ )
-		array[i] = *self->get( self, i );
+	for( i = 0; i < self->size( self ); i++ ){
+		array[i] = now->data;
+		now = now->next;
+	}
 
 	return array;
 }
@@ -107,8 +110,7 @@ static TYPE* get( bList *self, LENGTH_TYPE index ){
 	memset( &tmp, 0, sizeof(TYPE) );
 	bListNode *indexPtr = get_ptr( self, index );
 	if( indexPtr == NULL ){
-		while( index != (self->size(self) - 1) )
-			self->push_back( self, &tmp );
+		self->resize( self, index );
 		indexPtr = get_ptr( self, index );
 	}
 	return &(indexPtr->data);
@@ -129,8 +131,8 @@ static void insert( bList *self, LENGTH_TYPE index, const TYPE *data ){
 	if( indexPtr != NULL ){
 		if( indexPtr->prev != NULL ){
 			indexPtr->prev->next = new;
-			indexPtr->prev = new;
 			new->prev = indexPtr->prev;
+			indexPtr->prev = new;
 			new->next = indexPtr;
 		}
 		else{
@@ -189,9 +191,29 @@ static void push_front( bList *self, const TYPE *data ){
 	return;
 }
 
+static void resize( bList *self, LENGTH_TYPE index ){
+	TYPE tmp;
+	memset( &tmp, 0, sizeof( TYPE ) );
+
+	while( self->size( self ) - 1 > index )
+		self->pop_back( self );
+	while( self->size( self ) - 1 < index )
+		self->push_back( self, &tmp );
+
+	return;
+
+}
+
 static void reverse( bList *self ){
 	bListNode *now = self->begin, *tmp;
 	LENGTH_TYPE i = 0;
+
+	for( i = 0; i < self->size(self); i++ ){
+//		printf("要素%llu ptr = %p prev = %p next = %p\n", i, now, now->prev, now->next );
+		now = now->next;
+	}
+	now = self->begin;
+
 	for( i = 0; i < self->size(self); i++ ){
 		tmp = now->next;
 		now->next = now->prev;
@@ -201,6 +223,11 @@ static void reverse( bList *self ){
 	tmp = self->begin;
 	self->begin = self->end;
 	self->end = tmp;
+	now = self->begin;
+	for( i = 0; i < self->size(self); i++ ){
+//		printf("要素%llu ptr = %p prev = %p next = %p\n", i, now, now->prev, now->next );
+		now = now->next;
+	}
 	return;
 }
 
@@ -219,7 +246,13 @@ static int comp( const void *a, const void *b ){
 
 static void sort( bList *self ){
 	LENGTH_TYPE i = 0;
+
 	TYPE *data = self->array( self );
+
+//	puts("ARRAY");
+//	for( i = 0; i < self->size( self ); i++ )
+//		printf("%d\n", data[i]);
+
 	qsort( data, self->size( self ), sizeof( TYPE ), comp );
 	for( i = 0; i < self->size( self ); i++ )
 		*(self->get( self, i )) = data[i];
@@ -231,9 +264,13 @@ static void sort( bList *self ){
 
 static void unique( bList *self ){
 	LENGTH_TYPE i = 0;
-	for( i = 0; i < self->size( self ) - 1; i++ )
-		if( *self->get( self, i ) ==  *self->get( self, i + 1 ) )
+	bListNode *now = self->begin;
+
+	for( i = 0; i < self->size( self ) - 1; i++ ){
+		if( now->data == now->next->data )
 			self->erase( self, i + 1 );
+		now = now->next;
+	}
 
 	return;
 }
@@ -259,6 +296,7 @@ void bList_init( bList *self ){
 	self->pop_front = pop_front;
 	self->push_back = push_back;
 	self->push_front = push_front;
+	self->resize = resize;
 	self->reverse = reverse;
 	self->size = size;
 	self->sort = sort;

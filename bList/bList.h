@@ -32,6 +32,7 @@ typedef struct bList{
 	void (*pop_front)( struct bList *self );
 	void (*push_back)( struct bList *self, const TYPE *data );
 	void (*push_front)( struct bList *self, const TYPE *data );
+	void (*resize)( struct bList *self, LENGTH_TYPE index );
 	void (*reverse)( struct bList *self );
 	LENGTH_TYPE (*size)( const struct bList *self );
 	void (*sort)( struct bList *self );
